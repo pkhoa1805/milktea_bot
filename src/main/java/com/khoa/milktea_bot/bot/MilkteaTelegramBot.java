@@ -3,6 +3,7 @@ package com.khoa.milktea_bot.bot;
 import com.khoa.milktea_bot.config.BotConfig;
 import com.khoa.milktea_bot.dto.DrinkItem;
 import com.khoa.milktea_bot.dto.ToppingItem;
+import com.khoa.milktea_bot.entity.Order;
 import com.khoa.milktea_bot.entity.OrderSize;
 import com.khoa.milktea_bot.entity.TelegramUser;
 import com.khoa.milktea_bot.service.MenuService;
@@ -320,8 +321,9 @@ public class MilkteaTelegramBot extends TelegramLongPollingBot {
                     return;
                 }
 
-                orderService.createOrder(user, drinkName, size, drinkPrice, toppingsText, toppingTotal, totalPrice);
+                Order savedOrder = orderService.createOrder(user, drinkName, size, drinkPrice, toppingsText, toppingTotal, totalPrice);
                 sendText(chatId, "✅ Đơn hàng đã được ghi nhận. Cảm ơn bạn!");
+                notifyAdminNewOrder(user, savedOrder);
             } catch (Exception e) {
                 logger.error("Lỗi khi lưu đơn hàng chatId={}", chatId, e);
                 sendText(chatId, "Không lưu được đơn. Vui lòng thử lại hoặc gửi /start. Lỗi: " + e.getMessage());
@@ -336,6 +338,34 @@ public class MilkteaTelegramBot extends TelegramLongPollingBot {
         resetSession(chatId);
         sendMessage(chatId, "Chọn tiếp:", buildMainMenuKeyboard());
         userSessions.put(chatId, UserSession.main());
+    }
+
+    /** Gửi thông tin đơn mới cho admin (nếu đã cấu hình admin-chat-id). */
+    private void notifyAdminNewOrder(TelegramUser customer, Order order) {
+        Long adminChatId = botConfig.getAdminChatId();
+        if (adminChatId == null) {
+            return;
+        }
+        String customerName = customer.getFirstName() != null ? customer.getFirstName() : "";
+        if (customer.getLastName() != null && !customer.getLastName().isBlank()) {
+            customerName = customerName + " " + customer.getLastName();
+        }
+        if (customerName.isBlank() && customer.getUsername() != null) {
+            customerName = "@" + customer.getUsername();
+        }
+        if (customerName.isBlank()) {
+            customerName = "ID: " + customer.getTelegramId();
+        }
+        String toppingsLine = order.getToppingsText() != null && !order.getToppingsText().isBlank()
+                ? order.getToppingsText() + " (+" + order.getToppingTotal() + " VNĐ)"
+                : "Không";
+        String msg = "🆕 Đơn hàng mới\n\n"
+                + "👤 Khách: " + customerName.trim() + "\n"
+                + "📱 Telegram ID: " + customer.getTelegramId() + "\n\n"
+                + "🍹 Món: " + order.getDrinkName() + " (" + order.getSize() + ") - " + order.getDrinkPrice() + " VNĐ\n"
+                + "➕ Topping: " + toppingsLine + "\n"
+                + "💰 Tổng cộng: " + order.getTotalPrice() + " VNĐ";
+        sendText(adminChatId, msg);
     }
 
     /** Hiển thị danh sách đơn của user (telegramId lấy từ message khi gọi) */

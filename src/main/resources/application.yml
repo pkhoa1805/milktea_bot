@@ -6,7 +6,8 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/milktea_db
     username: postgres
-    password: ${DB_PASSWORD:123}
+    # Mật khẩu DB: set trong .env (DB_PASSWORD) hoặc biến môi trường
+    password: ${DB_PASSWORD:}
 
   jpa:
     hibernate:
@@ -14,8 +15,9 @@ spring:
     show-sql: true
     open-in-view: false
 
-# Long Polling Bot
+# Bot & Admin: set trong .env (xem .env.example). Ứng dụng load .env từ thư mục gốc khi chạy.
 telegram:
   bot:
-    username: ${TELEGRAM_BOT_USERNAME:milktea_bot}
-    token: ${TELEGRAM_BOT_TOKEN:8631106923:AAFaygkOy_OjRnKVdNYjg2TiSlGX7nON0NI}
+    username: ${TELEGRAM_BOT_USERNAME:}
+    token: ${TELEGRAM_BOT_TOKEN:}
+    admin-chat-id: ${TELEGRAM_ADMIN_CHAT_ID:}

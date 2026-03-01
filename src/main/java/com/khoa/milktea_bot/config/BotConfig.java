@@ -12,6 +12,8 @@ public class BotConfig {
 
     private String token;
     private String username;
+    /** Chat ID của admin để bot gửi thông báo đơn mới (để trống = không gửi). */
+    private String adminChatId;
 
     public String getToken() {
         return token;
@@ -27,5 +29,20 @@ public class BotConfig {
 
     public void setUsername(String username) {
         this.username = username;
+    }
+
+    public Long getAdminChatId() {
+        if (adminChatId == null || adminChatId.isBlank()) {
+            return null;
+        }
+        try {
+            return Long.parseLong(adminChatId.trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    public void setAdminChatId(String adminChatId) {
+        this.adminChatId = adminChatId;
     }
 }
